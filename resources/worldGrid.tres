@@ -1,0 +1,14 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://bgrp5n4nfs7sl"]
+
+[ext_resource type="Texture2D" uid="uid://dgtfyqfa6ewg5" path="res://assets/tiles/GPSW-text.png" id="1_rakxj"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pk3s8"]
+texture = ExtResource("1_rakxj")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+
+[resource]
+terrain_set_0/mode = 0
+sources/0 = SubResource("TileSetAtlasSource_pk3s8")

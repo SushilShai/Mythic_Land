@@ -1,0 +1,30 @@
+[gd_scene load_steps=9 format=3 uid="uid://cugy5bhbafhm1"]
+
+[ext_resource type="Script" uid="uid://b5lcpnnv7posy" path="res://scripts/world.gd" id="1_4wyf3"]
+[ext_resource type="TileSet" uid="uid://bgrp5n4nfs7sl" path="res://resources/worldGrid.tres" id="2_k0juu"]
+[ext_resource type="TileSet" uid="uid://ba6x20mcmjx7h" path="res://resources/displayGrid.tres" id="3_71j4m"]
+[ext_resource type="Shader" uid="uid://vu1tsnlwjbu0" path="res://assets/tiles/world.gdshader" id="3_qfnet"]
+[ext_resource type="Texture2D" uid="uid://de1pw1bbnsk6j" path="res://assets/tiles/grass-sheders.png" id="4_i7141"]
+[ext_resource type="Texture2D" uid="uid://cy1v1gv6f1hvd" path="res://assets/tiles/sand.jpg" id="5_4mrxx"]
+[ext_resource type="PackedScene" uid="uid://dqjypb5g801n" path="res://scenes/Player.tscn" id="7_i7141"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7r4gi"]
+shader = ExtResource("3_qfnet")
+shader_parameter/red_overlay_tex = ExtResource("4_i7141")
+shader_parameter/sand_overlay_tex = ExtResource("5_4mrxx")
+shader_parameter/scale = 0.006944444
+shader_parameter/tolerance = 0.05
+
+[node name="world" type="Node2D"]
+script = ExtResource("1_4wyf3")
+
+[node name="WorldGrid" type="TileMapLayer" parent="."]
+tile_set = ExtResource("2_k0juu")
+
+[node name="DisplayGrid" type="TileMapLayer" parent="."]
+material = SubResource("ShaderMaterial_7r4gi")
+tile_set = ExtResource("3_71j4m")
+
+[node name="Node2D" parent="." instance=ExtResource("7_i7141")]
+position = Vector2(0, -1)
+move_speed = 15.0
