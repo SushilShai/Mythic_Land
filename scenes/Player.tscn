@@ -1,8 +1,11 @@
-[gd_scene load_steps=42 format=3 uid="uid://dqjypb5g801n"]
+[gd_scene load_steps=45 format=3 uid="uid://dqjypb5g801n"]
 
 [ext_resource type="Script" uid="uid://cnoy2wuilobqy" path="res://scripts/player_controller.gd" id="1_v6fml"]
 [ext_resource type="Texture2D" uid="uid://cajxrie20hjqq" path="res://assets/Characters/kisan.png" id="2_3li8b"]
 [ext_resource type="Script" uid="uid://d3niqkrrb3cs0" path="res://scripts/animation_system.gd" id="2_mdl7e"]
+[ext_resource type="Script" uid="uid://b2qbmlwa3li0s" path="res://scenes/joystick.gd" id="4_70d11"]
+[ext_resource type="Texture2D" uid="uid://mo4v7wjejcnm" path="res://assets/ui/joystick.png" id="5_cw2d6"]
+[ext_resource type="Texture2D" uid="uid://cndcosxu52rwp" path="res://assets/ui/knob.png" id="6_khinc"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mdl7e"]
 atlas = ExtResource("2_3li8b")
@@ -351,3 +354,26 @@ autoplay = "idle_down"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 6)
 shape = SubResource("CapsuleShape2D_5q5h1")
+
+[node name="joystick" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("4_70d11")
+
+[node name="Base" type="TextureRect" parent="joystick"]
+layout_mode = 0
+offset_left = -307.0
+offset_top = 60.0
+offset_right = -227.0
+offset_bottom = 140.0
+texture = ExtResource("5_cw2d6")
+
+[node name="Konb" type="TextureRect" parent="joystick"]
+layout_mode = 0
+offset_left = -284.0
+offset_top = 82.0
+offset_right = -249.0
+offset_bottom = 117.0
+texture = ExtResource("6_khinc")
