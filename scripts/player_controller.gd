@@ -2,7 +2,7 @@ extends CharacterBody2D
 class_name PlayerController
 
 @export var move_speed = 15.0
-@export var sprint_increase = 1.5
+@export var sprint_increase = 2
 
 var direction : Vector2
 var sprinting = false

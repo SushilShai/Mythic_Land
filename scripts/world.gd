@@ -3,8 +3,11 @@ extends Node2D
 @export var noise_texture: NoiseTexture2D
 var noise: Noise
 
-var width: int = 200
-var height: int = 200
+const CHUNK_SIZE = 48
+@export var RENDER_DISTANCE = 1
+
+var loaded_chunks = {}    # stores loaded chunk coords → true
+var world_data = {}       # stores world tile data
 
 @onready var world_grid: TileMapLayer = $WorldGrid
 @onready var display_grid: TileMapLayer = $DisplayGrid
@@ -16,8 +19,6 @@ var grass_atlas = Vector2i(0, 0)
 var sand_atlas = Vector2i(0, 1)
 var water_atlas = Vector2i(1, 1)
 var cliff_atlas = Vector2i(1,0)
-
-var noise_val_arr = []
 
 @export var world_seed: int = 0
 var tile_size: int = 16
@@ -31,8 +32,7 @@ var s3=6
 var gw=3
 var w3=4
 var clf=5
-# Returns [source_id, atlas_coords]
-# --------------------------
+
 var display_tile_map = {
 	# Full tiles
 	["Grass","Grass","Grass","Grass"]: [gs, Vector2i(2,1)],
@@ -169,80 +169,80 @@ var display_tile_map = {
 
 }
 
+# ----------------------
 func _ready() -> void:
 	if noise_texture == null:
 		noise_texture = NoiseTexture2D.new()
 		noise_texture.noise = FastNoiseLite.new()
-	
+
 	if world_seed == 0:
 		world_seed = generate_signed_16_digit_seed()
 
 	print("Using seed: ", world_seed)
 
-	# Set noise seed
 	noise_texture.noise.seed = world_seed
 	noise = noise_texture.noise
+	
+	# Set global positions (half-tile offset only once for display grid)
+	#world_grid.position = Vector2.ZERO
+	#display_grid.position = Vector2(tile_size / 2, tile_size / 2)
 
-	# Generate world & display grids
-	generate_world()
-	generate_display_grid()
+	# Load initial chunks (centered at 0,0)
+	load_initial_chunks()
 
 
 # ----------------------
-# Generate World Grid
+func load_initial_chunks() -> void:
+	var start_chunk_x = 0
+	var start_chunk_y = 0
+
+	for cx in range(start_chunk_x - 1, start_chunk_x + 2):
+		for cy in range(start_chunk_y - 1, start_chunk_y + 2):
+			var key = Vector2i(cx, cy)
+			if loaded_chunks.has(key):
+				continue
+			loaded_chunks[key] = true
+			generate_world_chunk(cx, cy)
+			generate_display_chunk(cx, cy)
+
+
 # ----------------------
-func generate_world() -> void:
-	@warning_ignore("integer_division")
-	for x in range(-width/2, width/2):
-		@warning_ignore("integer_division")
-		for y in range(-height/2, height/2):
+func generate_world_chunk(cx: int, cy: int) -> void:
+	var start_x = cx * CHUNK_SIZE
+	var start_y = cy * CHUNK_SIZE
+
+	for x in range(start_x, start_x + CHUNK_SIZE+3):
+		for y in range(start_y, start_y + CHUNK_SIZE+3):
 			var noise_val = noise.get_noise_2d(x, y)
-			noise_val_arr.append(noise_val)
+			world_data[Vector2i(x, y)] = noise_val
 
 			if noise_val < -0.1:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, water_atlas)
-			elif noise_val >= -0.1 and noise_val < -0.0450:
+			elif noise_val < -0.045:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, sand_atlas)
-			elif noise_val >= -0.0450 and noise_val < 0.25:
+			elif noise_val < 0.25:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, grass_atlas)
-			elif noise_val >= 0.25 and noise_val < 0.3:
-				world_grid.set_cell(Vector2i(x, y), world_source_id, cliff_atlas)
-			else: 
+			else:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, cliff_atlas)
 
 
-
 # ----------------------
-# Generate Display Grid
-# ----------------------
-func generate_display_grid() -> void:
-	display_grid.clear()
-	@warning_ignore("integer_division")
-	display_grid.position = Vector2(tile_size/2, tile_size/2) # offset half tile
+func generate_display_chunk(cx: int, cy: int) -> void:
+	var start_x = cx * CHUNK_SIZE
+	var start_y = cy * CHUNK_SIZE
 
-	@warning_ignore("integer_division")
-	for dx in range(-width/2, width/2 - 1):
-		@warning_ignore("integer_division")
-		for dy in range(-height/2, height/2 - 1):
+	for dx in range(start_x, start_x + CHUNK_SIZE):
+		for dy in range(start_y, start_y + CHUNK_SIZE):
 			var world_tiles = get_world_tiles_under_display(dx, dy)
 			var tile_data = pick_custom_display_tile(world_tiles)
-			display_grid.set_cell(Vector2i(dx, dy), tile_data[0], tile_data[1])
-				
-			# Cliff column placement
-			if tile_data[0] == clf and tile_data.size() == 3:
-				var top_atlas = tile_data[1]
-				var bottom_atlas = tile_data[2]
 
-				# top cliff tile (above)
-				display_grid.set_cell(Vector2i(dx, dy - 1), clf, top_atlas)
-				# bottom cliff tile
-				display_grid.set_cell(Vector2i(dx, dy), clf, bottom_atlas)
+			if tile_data[0] == clf and tile_data.size() == 3:
+				display_grid.set_cell(Vector2i(dx, dy - 1), clf, tile_data[1])
+				display_grid.set_cell(Vector2i(dx, dy), clf, tile_data[2])
 			else:
-				# Normal placement
 				display_grid.set_cell(Vector2i(dx, dy), tile_data[0], tile_data[1])
 
-# ----------------------
-# Get 4 world tiles under a display tile
+
 # ----------------------
 func get_world_tiles_under_display(dx: int, dy: int) -> Array[Vector2i]:
 	return [
@@ -254,14 +254,64 @@ func get_world_tiles_under_display(dx: int, dy: int) -> Array[Vector2i]:
 
 
 # ----------------------
-# Pick display tile based on custom mapping
-# Returns [source_id, atlas_coords]
+func update_chunks(player_pos: Vector2) -> void:
+	var tile_pos = player_pos / tile_size
+	var cx = int(floor(tile_pos.x / CHUNK_SIZE))
+	var cy = int(floor(tile_pos.y / CHUNK_SIZE))
+
+	var new_loaded_chunks = {}  # temp dictionary to track active chunks
+
+	# Load/generate 3x3 chunks around player
+	for x in range(cx - RENDER_DISTANCE, cx + RENDER_DISTANCE + 1):
+		for y in range(cy - RENDER_DISTANCE, cy + RENDER_DISTANCE + 1):
+			var key = Vector2i(x, y)
+			new_loaded_chunks[key] = true
+
+			if not loaded_chunks.has(key):
+				loaded_chunks[key] = true
+				generate_world_chunk(x, y)
+				generate_display_chunk(x, y)
+
+	# Remove chunks that are no longer in the 3x3 area
+	for old_key in loaded_chunks.keys():
+		if not new_loaded_chunks.has(old_key):
+			remove_chunk(old_key)
+			loaded_chunks.erase(old_key)
+
+func remove_chunk(chunk_coord: Vector2i) -> void:
+	var start_x = chunk_coord.x * CHUNK_SIZE
+	var start_y = chunk_coord.y * CHUNK_SIZE
+
+	for x in range(start_x, start_x + CHUNK_SIZE):
+		for y in range(start_y, start_y + CHUNK_SIZE):
+			world_grid.set_cell(Vector2i(x, y), -1, Vector2i.ZERO)  # remove world tile
+			display_grid.set_cell(Vector2i(x, y), -1, Vector2i.ZERO)  # remove display tile
+
+@onready var player: PlayerController = $player
+
+@warning_ignore("unused_parameter")
+func _process(delta):
+	if player != null:
+		update_chunks(player.position)
+
+
 # ----------------------
 func pick_custom_display_tile(world_tiles: Array[Vector2i]) -> Array:
 	var tile_types: Array[String] = []
 
 	for wt in world_tiles:
-		var atlas = world_grid.get_cell_atlas_coords(wt)
+		var noise_val = world_data.get(wt, 0.0)
+		var atlas: Vector2i
+
+		if noise_val < -0.1:
+			atlas = water_atlas
+		elif noise_val < -0.045:
+			atlas = sand_atlas
+		elif noise_val < 0.25:
+			atlas = grass_atlas
+		else:
+			atlas = cliff_atlas
+
 		if atlas == grass_atlas:
 			tile_types.append("Grass")
 		elif atlas == sand_atlas:
@@ -275,18 +325,15 @@ func pick_custom_display_tile(world_tiles: Array[Vector2i]) -> Array:
 
 	if display_tile_map.has(tile_types):
 		var data = display_tile_map[tile_types]
-		# Handle special "column cliff" case
+
 		if typeof(data[0]) == TYPE_ARRAY and data.size() == 2:
-			# data looks like [[clf, top_atlas], [clf, bottom_atlas]]
 			return [clf, data[0][1], data[1][1]]
 		else:
 			return data
 	else:
-		return [gs, grass_atlas]  # default fallback
+		return [gs, grass_atlas]  # fallback
 
 
-# ----------------------
-# Utility: Generate signed 16-digit seed
 # ----------------------
 func generate_signed_16_digit_seed() -> int:
 	var s = ""
