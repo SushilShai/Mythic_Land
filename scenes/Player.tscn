@@ -358,8 +358,10 @@ shape = SubResource("CapsuleShape2D_5q5h1")
 [node name="joystick" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 147.0
+offset_top = -87.0
+offset_right = 187.0
+offset_bottom = -47.0
 script = ExtResource("4_70d11")
 
 [node name="Base" type="TextureRect" parent="joystick"]
