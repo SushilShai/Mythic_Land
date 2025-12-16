@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://cugy5bhbafhm1"]
+[gd_scene load_steps=13 format=3 uid="uid://cugy5bhbafhm1"]
 
 [ext_resource type="Script" uid="uid://b5lcpnnv7posy" path="res://scripts/world.gd" id="1_4wyf3"]
 [ext_resource type="TileSet" uid="uid://ba6x20mcmjx7h" path="res://resources/displayGrid.tres" id="3_71j4m"]
 [ext_resource type="Shader" uid="uid://vu1tsnlwjbu0" path="res://assets/tiles/world.gdshader" id="3_qfnet"]
 [ext_resource type="Texture2D" uid="uid://de1pw1bbnsk6j" path="res://assets/tiles/grass-sheders.png" id="4_i7141"]
 [ext_resource type="Texture2D" uid="uid://cy1v1gv6f1hvd" path="res://assets/tiles/sand.jpg" id="5_4mrxx"]
+[ext_resource type="Texture2D" uid="uid://bq0jiy65fpa3f" path="res://assets/ui/highliter-Sheet.png" id="6_i7141"]
 [ext_resource type="PackedScene" uid="uid://dqjypb5g801n" path="res://scenes/Player.tscn" id="7_i7141"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_i7141"]
@@ -21,6 +22,18 @@ shader_parameter/sand_overlay_tex = ExtResource("5_4mrxx")
 shader_parameter/scale = 0.006944444
 shader_parameter/tolerance = 0.05
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4mrxx"]
+texture = ExtResource("6_i7141")
+0:0/animation_columns = 4
+0:0/animation_frame_0/duration = 3.0
+0:0/animation_frame_1/duration = 0.2
+0:0/animation_frame_2/duration = 0.2
+0:0/animation_frame_3/duration = 0.2
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_7r4gi"]
+sources/0 = SubResource("TileSetAtlasSource_4mrxx")
+
 [node name="world" type="Node2D"]
 script = ExtResource("1_4wyf3")
 noise_texture = SubResource("NoiseTexture2D_4mrxx")
@@ -30,6 +43,9 @@ noise_texture = SubResource("NoiseTexture2D_4mrxx")
 [node name="DisplayGrid" type="TileMapLayer" parent="."]
 material = SubResource("ShaderMaterial_7r4gi")
 tile_set = ExtResource("3_71j4m")
+
+[node name="marker" type="TileMapLayer" parent="."]
+tile_set = SubResource("TileSet_7r4gi")
 
 [node name="player" parent="." instance=ExtResource("7_i7141")]
 position = Vector2(0, -1)
