@@ -35,3 +35,4 @@ tile_set = ExtResource("3_71j4m")
 position = Vector2(0, -1)
 
 [node name="Camera2D2" type="Camera2D" parent="player"]
+zoom = Vector2(3, 3)

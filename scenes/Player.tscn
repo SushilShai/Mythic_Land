@@ -364,16 +364,16 @@ script = ExtResource("4_70d11")
 
 [node name="Base" type="TextureRect" parent="joystick"]
 layout_mode = 0
-offset_left = -307.0
-offset_top = 60.0
-offset_right = -227.0
-offset_bottom = 140.0
+offset_left = -411.0
+offset_top = 118.0
+offset_right = -331.0
+offset_bottom = 198.0
 texture = ExtResource("5_cw2d6")
 
 [node name="Konb" type="TextureRect" parent="joystick"]
 layout_mode = 0
-offset_left = -284.0
-offset_top = 82.0
-offset_right = -249.0
-offset_bottom = 117.0
+offset_left = -388.0
+offset_top = 140.0
+offset_right = -353.0
+offset_bottom = 175.0
 texture = ExtResource("6_khinc")
