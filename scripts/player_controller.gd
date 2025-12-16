@@ -29,22 +29,6 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	direction = Vector2.ZERO
 
-	# ---------- TILE HIGHLIGHT ----------
-	var mouse_pos: Vector2 = get_global_mouse_position()
-	var hover_cell: Vector2i = display_grid.local_to_map(mouse_pos)
-
-		# Clear marker layer each frame
-	marker.clear()
-
-	# Highlight hovered cell (atlas_coords (0,0) = hover highlight)
-	marker.set_cell(hover_cell, 0, Vector2i(0,0), 0)
-
-	# If click target exists, highlight it differently (atlas_coords (1,0) = click target)
-	if click_position != position:
-		click_cell = display_grid.local_to_map(click_position)
-		marker.set_cell(click_cell, 0, Vector2i(1,0), 0)
-
-
 	# ---------- KEYBOARD INPUT ----------
 	if Input.is_action_pressed("move_up"):
 		direction.y -= 1
@@ -75,8 +59,7 @@ func _physics_process(delta: float) -> void:
 
 	# ---------- MOUSE CLICK (only if no key/joystick input) ----------
 	if direction == Vector2.ZERO:
-		if Input.is_action_just_pressed("left_click"):
-			# Snap click position to grid
+		if Input.is_action_pressed("left_click"):
 			var target_cell: Vector2i = display_grid.local_to_map(get_global_mouse_position())
 			click_position = display_grid.map_to_local(target_cell)
 
@@ -87,8 +70,21 @@ func _physics_process(delta: float) -> void:
 			else:
 				player_facing = Facing.DOWN if direction.y > 0 else Facing.UP
 	else:
-		# cancel old click target when keys/joystick are used
 		click_position = position
+
+	# ---------- TILE HIGHLIGHT ----------
+	marker.clear()
+	if direction == Vector2.ZERO:
+		var mouse_pos: Vector2 = get_global_mouse_position()
+		var hover_cell: Vector2i = display_grid.local_to_map(mouse_pos)
+
+		# Highlight hovered cell
+		marker.set_cell(hover_cell, 0, Vector2i(0,0), 0)
+
+		# Highlight click target if exists
+		if click_position != position:
+			click_cell = display_grid.local_to_map(click_position)
+			marker.set_cell(click_cell, 0, Vector2i(1,0), 0)
 
 	# ---------- SPRINT ----------
 	if Input.is_action_pressed("sprint"):
