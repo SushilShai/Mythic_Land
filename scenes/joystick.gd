@@ -39,6 +39,7 @@ func _gui_input(event):
 	elif event is InputEventMouseMotion and dragging:
 		_process_drag(event.position)
 
+@warning_ignore("unused_parameter")
 func _process_drag(pos: Vector2):
 	# Convert input to local coordinates relative to the base
 	var local_pos = base.get_local_mouse_position()

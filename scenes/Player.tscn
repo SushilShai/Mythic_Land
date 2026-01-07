@@ -160,7 +160,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_qu4a1")
 }],
-"loop": true,
+"loop": false,
 "name": &"chop_down",
 "speed": 5.0
 }, {
@@ -171,7 +171,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_cw2d6")
 }],
-"loop": true,
+"loop": false,
 "name": &"chop_left",
 "speed": 5.0
 }, {
@@ -182,7 +182,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_bruh7")
 }],
-"loop": true,
+"loop": false,
 "name": &"chop_right",
 "speed": 5.0
 }, {
@@ -193,7 +193,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_d3wef")
 }],
-"loop": true,
+"loop": false,
 "name": &"chop_up",
 "speed": 5.0
 }, {
@@ -348,7 +348,7 @@ player_controller = NodePath("..")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="AnimationSystem"]
 position = Vector2(2, 0)
 sprite_frames = SubResource("SpriteFrames_gu4mg")
-animation = &"idle_down"
+animation = &"chop_down"
 autoplay = "idle_down"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

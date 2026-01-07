@@ -8,6 +8,7 @@ var default_animation_speed
 func _ready():
 	default_animation_speed = animated_sprite_2d.speed_scale
 
+@warning_ignore("unused_parameter")
 func _process(delta):
 	if player_controller.velocity.length() > 0.0:
 		#play movement animations

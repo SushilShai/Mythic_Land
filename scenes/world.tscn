@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cugy5bhbafhm1"]
+[gd_scene load_steps=16 format=4 uid="uid://cugy5bhbafhm1"]
 
 [ext_resource type="Script" uid="uid://b5lcpnnv7posy" path="res://scripts/world.gd" id="1_4wyf3"]
 [ext_resource type="TileSet" uid="uid://ba6x20mcmjx7h" path="res://resources/displayGrid.tres" id="3_71j4m"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://de1pw1bbnsk6j" path="res://assets/tiles/grass-sheders.png" id="4_i7141"]
 [ext_resource type="Texture2D" uid="uid://cy1v1gv6f1hvd" path="res://assets/tiles/sand.jpg" id="5_4mrxx"]
 [ext_resource type="Texture2D" uid="uid://bq0jiy65fpa3f" path="res://assets/ui/highliter-Sheet.png" id="6_i7141"]
+[ext_resource type="Texture2D" uid="uid://6ovhsju4vcmb" path="res://assets/plants/tree.png" id="7_4mrxx"]
 [ext_resource type="PackedScene" uid="uid://dqjypb5g801n" path="res://scenes/Player.tscn" id="7_i7141"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_i7141"]
@@ -34,6 +35,19 @@ texture = ExtResource("6_i7141")
 [sub_resource type="TileSet" id="TileSet_7r4gi"]
 sources/0 = SubResource("TileSetAtlasSource_4mrxx")
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7r4gi"]
+texture = ExtResource("7_4mrxx")
+0:0/size_in_atlas = Vector2i(2, 3)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, 16)
+2:0/size_in_atlas = Vector2i(2, 3)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, 16)
+
+[sub_resource type="TileSet" id="TileSet_w7kh3"]
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_7r4gi")
+
 [node name="world" type="Node2D"]
 script = ExtResource("1_4wyf3")
 noise_texture = SubResource("NoiseTexture2D_4mrxx")
@@ -46,6 +60,10 @@ tile_set = ExtResource("3_71j4m")
 
 [node name="marker" type="TileMapLayer" parent="."]
 tile_set = SubResource("TileSet_7r4gi")
+
+[node name="trees" type="TileMapLayer" parent="."]
+tile_map_data = PackedByteArray("AAD9/wAAAAAAAAAAAAD8/wEAAAAAAAAAAAD7/wAAAAAAAAAAAAACAAAAAAACAAAAAAADAAEAAAACAAAAAAAEAAAAAAACAAAAAAA=")
+tile_set = SubResource("TileSet_w7kh3")
 
 [node name="player" parent="." instance=ExtResource("7_i7141")]
 position = Vector2(0, -1)
