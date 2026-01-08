@@ -1,0 +1,172 @@
+[gd_scene load_steps=4 format=3 uid="uid://cpnidynb4ficx"]
+
+[ext_resource type="Script" uid="uid://bo4jkq8okuti8" path="res://scripts/login.gd" id="1_0oy7x"]
+[ext_resource type="Script" uid="uid://cnv3qlwwi3lmq" path="res://scripts/signup.gd" id="2_heorj"]
+[ext_resource type="Script" uid="uid://bfmq7prkq2pfp" path="res://scripts/main.gd" id="3_ysb2u"]
+
+[node name="menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Login" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_0oy7x")
+
+[node name="Email" type="LineEdit" parent="Login"]
+layout_mode = 0
+offset_left = -194.0
+offset_top = -167.0
+offset_right = 196.0
+offset_bottom = -96.0
+placeholder_text = "Enter Email"
+
+[node name="Password" type="LineEdit" parent="Login"]
+layout_mode = 0
+offset_left = -190.0
+offset_top = -76.0
+offset_right = 194.0
+offset_bottom = -9.0
+placeholder_text = "Enter password"
+secret = true
+
+[node name="LoginButton" type="Button" parent="Login"]
+layout_mode = 0
+offset_left = -138.0
+offset_top = 84.0
+offset_right = 139.0
+offset_bottom = 130.0
+text = "Login"
+
+[node name="LoginCamera" type="Camera2D" parent="Login"]
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Login"]
+layout_mode = 0
+offset_left = -159.0
+offset_top = 175.0
+offset_right = 33.0
+offset_bottom = 201.0
+text = "Don't have an account?"
+scroll_active = false
+
+[node name="SignupButton" type="Button" parent="Login"]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 173.0
+offset_right = 108.0
+offset_bottom = 204.0
+text = "Click me"
+
+[node name="LoginRequest" type="HTTPRequest" parent="Login"]
+
+[node name="Signup" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 1369.0
+offset_top = 4.0
+offset_right = 1409.0
+offset_bottom = 44.0
+script = ExtResource("2_heorj")
+
+[node name="Username" type="LineEdit" parent="Signup"]
+layout_mode = 0
+offset_left = 1077.0
+offset_top = -215.0
+offset_right = 1442.0
+offset_bottom = -150.0
+placeholder_text = "Username"
+
+[node name="Email" type="LineEdit" parent="Signup"]
+layout_mode = 0
+offset_left = 1077.0
+offset_top = -121.0
+offset_right = 1438.0
+offset_bottom = -50.0
+placeholder_text = "Email"
+
+[node name="Password" type="LineEdit" parent="Signup"]
+layout_mode = 0
+offset_left = 1077.0
+offset_top = -30.0
+offset_right = 1436.0
+offset_bottom = 37.0
+placeholder_text = "Password"
+secret = true
+
+[node name="Conform_Password" type="LineEdit" parent="Signup"]
+layout_mode = 0
+offset_left = 1077.0
+offset_top = 55.0
+offset_right = 1434.0
+offset_bottom = 116.0
+placeholder_text = "Confirm Password"
+secret = true
+
+[node name="SignupButton" type="Button" parent="Signup"]
+layout_mode = 0
+offset_left = 1099.0
+offset_top = 159.0
+offset_right = 1402.0
+offset_bottom = 205.74857
+text = "Signup"
+
+[node name="SignupCamera" type="Camera2D" parent="Signup"]
+position = Vector2(1254, -2)
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Signup"]
+layout_mode = 0
+offset_left = 1102.0
+offset_top = 225.0
+offset_right = 1308.0
+offset_bottom = 251.0
+text = "Already have an account?"
+scroll_active = false
+
+[node name="loginButton" type="Button" parent="Signup"]
+layout_mode = 0
+offset_left = 1304.0
+offset_top = 222.0
+offset_right = 1377.0
+offset_bottom = 253.0
+text = "Click me"
+
+[node name="SignupRequest" type="HTTPRequest" parent="Signup"]
+
+[node name="main" type="Control" parent="."]
+anchors_preset = 0
+offset_left = -6.0
+offset_top = 591.0
+offset_right = 34.0
+offset_bottom = 631.0
+script = ExtResource("3_ysb2u")
+
+[node name="mainCamera" type="Camera2D" parent="main"]
+position = Vector2(0, 1019)
+
+[node name="NewGame" type="Button" parent="main"]
+layout_mode = 0
+offset_left = -126.0
+offset_top = 921.0
+offset_right = 123.0
+offset_bottom = 976.0
+text = "New Game"
+
+[node name="LoadGame" type="Button" parent="main"]
+layout_mode = 0
+offset_left = -126.0
+offset_top = 993.0
+offset_right = 123.0
+offset_bottom = 1048.0
+text = "Load Game"
+
+[node name="Option" type="Button" parent="main"]
+layout_mode = 0
+offset_left = -125.0
+offset_top = 1060.0
+offset_right = 124.0
+offset_bottom = 1115.0
+text = "Options"
