@@ -338,7 +338,8 @@ animations = [{
 radius = 4.0
 height = 8.0
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" groups=["Player"]]
+collision_layer = 0
 script = ExtResource("1_v6fml")
 
 [node name="AnimationSystem" type="Node2D" parent="." node_paths=PackedStringArray("player_controller")]

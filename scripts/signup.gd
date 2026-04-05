@@ -41,7 +41,7 @@ func _on_signup_pressed():
 
 	print("creating account ...")
 	signup_request.request(
-		"http://127.0.0.1:8000/api/signup/",
+		"http://127.0.0.1:8000/api/auth/register/",
 		headers,
 		HTTPClient.METHOD_POST,
 		json_body

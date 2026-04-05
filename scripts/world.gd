@@ -9,10 +9,26 @@ var world_data = {} # stores world tile data (noise values)
 
 @onready var world_grid: TileMapLayer = $WorldGrid
 @onready var display_grid: TileMapLayer = $DisplayGrid
-@onready var trees: TileMapLayer = $trees
+@onready var trees: TileMapLayer = $Trees
 @onready var player: Node2D = $player  # Moved here for proper initialization
 
+
+#enemy
+var EnemyScene: PackedScene = preload("res://scenes/enemy.tscn")
+@export var spawn_area: Rect2 = Rect2(Vector2(0,0), Vector2(1024,768)) # adjust to your map size
+@export var max_enemies_per_chunk: int = 5
+
+const MAX_ENEMIES = 10
+var spawned_enemies: Array = []
+
+var terrain_grid: Array = []
+var object_grid: Array = []
+
+
 var world_source_id: int = 0
+
+var nav_map = NavigationServer2D.map_create()
+var chunk_nav_regions = {}
 
 # Atlas coordinates for world tiles (base terrain)
 var grass_atlas = Vector2i(0, 0)
@@ -152,33 +168,52 @@ var display_tile_map = {
 	["Cliff","Grass","Cliff","Grass"]: [clf, Vector2i(0,6)],
 }
 
+# Load the trees.gd script
+var tree_manager = preload("res://scripts/trees.gd").new()
+
 func _ready() -> void:
 	if noise_texture == null:
 		noise_texture = NoiseTexture2D.new()
 		noise_texture.noise = FastNoiseLite.new()
-	
+
 	if world_seed == 0:
 		world_seed = generate_signed_16_digit_seed()
 	print("Using seed: ", world_seed)
-	
+
+	if RENDER_DISTANCE == null:
+		RENDER_DISTANCE = 1
+
 	noise_texture.noise.seed = world_seed
 	noise = noise_texture.noise
-	
-	# Setup Z-index layers
+
 	setup_z_index()
-	
 	load_initial_chunks()
+	
+	var respawn_timer = Timer.new()
+	respawn_timer.wait_time = 5.0   # spawn every 5 seconds
+	respawn_timer.autostart = true
+	respawn_timer.one_shot = false
+	add_child(respawn_timer)
+	respawn_timer.timeout.connect(_on_respawn_timer)
+
+
+func _on_respawn_timer():
+	# Pick the chunk around the player
+	var cx = int(floor(player.global_position.x / CHUNK_SIZE))
+	var cy = int(floor(player.global_position.y / CHUNK_SIZE))
+	
+	# Spawn enemies dynamically in nearby chunks
+	for x in range(cx - 1, cx + 2):
+		for y in range(cy - 1, cy + 2):
+			place_enemies_dynamically(x, y)
 
 func setup_z_index() -> void:
-	# Set up Z-index for proper depth sorting
-	# Lower numbers = behind, higher numbers = in front
-	world_grid.z_index = -10  # Background terrain
-	display_grid.z_index = -5  # Display layer
-	player.z_index = 0         # Player at default level
-	trees.z_index = 5          # Trees initially behind player
-	
-	# Enable Y-sorting if you want proper depth based on Y position
-	# player.y_sort_enabled = true  # Uncomment if your player is a Sprite2D
+	world_grid.z_index = -10
+	display_grid.z_index = -5
+	player.z_index = 0
+	#trees.z_index = 10
+	# player.y_sort_enabled = true  # Uncomment if needed
+
 
 func load_initial_chunks() -> void:
 	for cx in range(-1, 2):
@@ -190,11 +225,11 @@ func load_initial_chunks() -> void:
 			generate_world_chunk(cx, cy)
 			generate_display_chunk(cx, cy)
 
+
 func generate_world_chunk(cx: int, cy: int) -> void:
 	var start_x = cx * CHUNK_SIZE
 	var start_y = cy * CHUNK_SIZE
 	
-	# Generate slightly larger area to avoid edge gaps
 	for x in range(start_x, start_x + CHUNK_SIZE + 3):
 		for y in range(start_y, start_y + CHUNK_SIZE + 3):
 			var noise_val = noise.get_noise_2d(x, y)
@@ -208,11 +243,10 @@ func generate_world_chunk(cx: int, cy: int) -> void:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, grass_atlas)
 			else:
 				world_grid.set_cell(Vector2i(x, y), world_source_id, cliff_atlas)
-	
-	# Place trees after terrain is set
-	place_trees_in_chunk(cx, cy)
+
 
 func generate_display_chunk(cx: int, cy: int) -> void:
+	print("Generating display chunk for: (", cx, ", ", cy, ")")
 	var start_x = cx * CHUNK_SIZE
 	var start_y = cy * CHUNK_SIZE
 	
@@ -226,6 +260,87 @@ func generate_display_chunk(cx: int, cy: int) -> void:
 				display_grid.set_cell(Vector2i(dx, dy), clf, tile_data[2])
 			else:
 				display_grid.set_cell(Vector2i(dx, dy), tile_data[0], tile_data[1])
+	
+	tree_manager.place_trees_dynamically(cx, cy)
+	place_enemies_dynamically(cx, cy)
+
+
+func place_enemies_dynamically(cx: int, cy: int) -> void:
+	if EnemyScene == null or player == null:
+		return
+	
+	# ✅ Stop if we already have 10 enemies
+	if spawned_enemies.size() >= MAX_ENEMIES:
+		return
+
+	var start_x = cx * CHUNK_SIZE
+	var start_y = cy * CHUNK_SIZE
+	
+	var min_distance = 20 * tile_size
+
+	# Try to spawn until we hit the global cap
+	while spawned_enemies.size() < MAX_ENEMIES:
+		var enemy_instance = EnemyScene.instantiate()
+		var spawn_pos: Vector2
+		var tries = 0
+		var valid = false
+
+		while tries < 50:
+			var random_x = randf_range(start_x - 512, start_x + CHUNK_SIZE + 512) # random in all directions
+			var random_y = randf_range(start_y - 512, start_y + CHUNK_SIZE + 512)
+			spawn_pos = Vector2(random_x, random_y)
+
+			if spawn_pos.distance_to(player.global_position) < min_distance:
+				tries += 1
+				continue
+
+			# Optional: only spawn on grass
+			var noise_val = world_data.get(Vector2i(int(random_x), int(random_y)), 0.0)
+			if noise_val < -0.045 or noise_val >= 0.25:
+				tries += 1
+				continue
+
+			valid = true
+			break
+
+		if valid:
+			enemy_instance.global_position = spawn_pos
+			add_child(enemy_instance)
+			spawned_enemies.append(enemy_instance)
+			enemy_instance.tree_exited.connect(_on_enemy_dead.bind(enemy_instance))
+			print("Spawned enemy at: ", spawn_pos)
+
+func _on_enemy_dead(enemy_instance: Node) -> void:
+	# Remove from tracking
+	if spawned_enemies.has(enemy_instance):
+		spawned_enemies.erase(enemy_instance)
+
+	# Respawn a new one at least 20 tiles away
+	var new_enemy = EnemyScene.instantiate()
+	var spawn_pos: Vector2
+	var tries = 0
+	var valid = false
+	var min_distance = 20 * tile_size
+
+	while tries < 50:
+		var random_x = randf_range(player.global_position.x - 512, player.global_position.x + 512)
+		var random_y = randf_range(player.global_position.y - 512, player.global_position.y + 512)
+		spawn_pos = Vector2(random_x, random_y)
+
+		if spawn_pos.distance_to(player.global_position) < min_distance:
+			tries += 1
+			continue
+
+		valid = true
+		break
+
+	if valid:
+		new_enemy.global_position = spawn_pos
+		add_child(new_enemy)
+		spawned_enemies.append(new_enemy)
+		new_enemy.tree_exited.connect(_on_enemy_dead.bind(new_enemy))
+		print("Respawned enemy at: ", spawn_pos)
+
 
 func get_world_tiles_under_display(dx: int, dy: int) -> Array[Vector2i]:
 	return [
@@ -235,10 +350,11 @@ func get_world_tiles_under_display(dx: int, dy: int) -> Array[Vector2i]:
 		Vector2i(dx + 1, dy + 1)
 	]
 
+
 func _process(_delta):
 	if player != null:
 		update_chunks(player.position)
-		update_z_index()
+
 
 func update_chunks(player_pos: Vector2) -> void:
 	var tile_pos = player_pos / tile_size
@@ -256,12 +372,39 @@ func update_chunks(player_pos: Vector2) -> void:
 				loaded_chunks[key] = true
 				generate_world_chunk(x, y)
 				generate_display_chunk(x, y)
+				generate_nav_chunk(x, y)
+				tree_manager.place_trees_dynamically(x, y)
 	
-	# Unload distant chunks
 	for old_key in loaded_chunks.keys():
 		if not new_loaded_chunks.has(old_key):
 			remove_chunk(old_key)
 			loaded_chunks.erase(old_key)
+
+func generate_nav_chunk(x: int, y: int) -> void:
+	var nav_region = NavigationRegion2D.new()
+
+	# Build a rectangle polygon for the chunk
+	var start = Vector2(x * CHUNK_SIZE * tile_size, y * CHUNK_SIZE * tile_size)
+	var size = Vector2(CHUNK_SIZE * tile_size, CHUNK_SIZE * tile_size)
+	var rect_points = PackedVector2Array([
+		start,
+		start + Vector2(size.x, 0),
+		start + size,
+		start + Vector2(0, size.y)
+	])
+
+	var nav_poly = NavigationPolygon.new()
+	nav_poly.add_outline(rect_points)
+	nav_poly.make_polygons_from_outlines()
+
+	nav_region.navigation_polygon = nav_poly
+
+	# ✅ Add region under NavigationRoot
+	add_child(nav_region)
+
+	# Store reference for cleanup
+	chunk_nav_regions[Vector2i(x, y)] = nav_region
+
 
 func remove_chunk(chunk_coord: Vector2i) -> void:
 	var start_x = chunk_coord.x * CHUNK_SIZE
@@ -271,14 +414,20 @@ func remove_chunk(chunk_coord: Vector2i) -> void:
 		for y in range(start_y, start_y + CHUNK_SIZE):
 			world_grid.set_cell(Vector2i(x, y), -1)
 			display_grid.set_cell(Vector2i(x, y), -1)
-			trees.set_cell(Vector2i(x, y), -1)  # Clear trees too
+			trees.set_cell(Vector2i(x, y), -1)
 	
-	# Remove tree positions from storage
 	for x in range(start_x, start_x + CHUNK_SIZE):
 		for y in range(start_y, start_y + CHUNK_SIZE):
 			var pos = Vector2i(x, y)
 			if tree_positions.has(pos):
 				tree_positions.erase(pos)
+	 # Remove nav region
+	if chunk_nav_regions.has(chunk_coord):
+		var region: NavigationRegion2D = chunk_nav_regions[chunk_coord]
+		region.queue_free()   # ✅ free the node directly
+		chunk_nav_regions.erase(chunk_coord)
+
+
 
 func pick_custom_display_tile(world_tiles: Array[Vector2i]) -> Array:
 	var tile_types: Array[String] = []
@@ -308,71 +457,8 @@ func pick_custom_display_tile(world_tiles: Array[Vector2i]) -> Array:
 		else:
 			return data
 	
-	return [gs, Vector2i(2,1)]  # Fallback to basic grass
+	return [gs, Vector2i(2,1)]
 
-# Simple tree placement (single tile trees)
-func place_trees_in_chunk(cx: int, cy: int) -> void:
-	var start_x = cx * CHUNK_SIZE
-	var start_y = cy * CHUNK_SIZE
-	
-	for x in range(start_x, start_x + CHUNK_SIZE):
-		for y in range(start_y, start_y + CHUNK_SIZE):
-			var noise_val = world_data.get(Vector2i(x, y), 0.0)
-			
-			# Only place trees on grass tiles
-			if noise_val >= -0.045 and noise_val < 0.25:
-				# Deterministic random chance for tree placement
-				var tree_chance = noise.get_noise_2d(x + 5000, y + 5000)
-				
-				if tree_chance > 0.6:
-					# Choose which tree variation to place
-					var tree_variant_noise = noise.get_noise_2d(x + 10000, y + 10000)
-					var tree_atlas_coord: Vector2i
-					
-					if tree_variant_noise > 0:
-						tree_atlas_coord = tree1_atlas  # tree1
-					else:
-						tree_atlas_coord = tree2_atlas  # tree2
-					
-					# Place the tree
-					trees.set_cell(Vector2i(x, y), tree_source_id, tree_atlas_coord)
-					
-					# Store tree position for Z-index updates
-					tree_positions.append(Vector2i(x, y))
-
-# Update Z-index based on player position relative to trees
-func update_z_index() -> void:
-	if player == null:
-		return
-	
-	# Get player's tile position (center of player)
-	@warning_ignore("unused_variable")
-	var player_tile_pos = Vector2i(player.position / tile_size)
-	
-	# Check all tree positions
-	var player_behind_tree = false
-	
-	for tree_pos in tree_positions:
-		# Convert tree position to world pixel position (center of tile)
-		var tree_world_pos = Vector2(
-			tree_pos.x * tile_size + tile_size / 2.0,
-			tree_pos.y * tile_size + tile_size / 2.0
-		)
-		
-		# If player is below (higher Y value) and horizontally aligned with tree
-		# Player is "behind" the tree if their Y position is greater than tree's Y position
-		if player.position.y > tree_world_pos.y and \
-		   abs(player.position.x - tree_world_pos.x) < tile_size * 1.5:  # Within reasonable X distance
-			player_behind_tree = true
-			break
-	
-	# Update tree Z-index based on player position
-	if player_behind_tree:
-		# Player is behind tree - tree should be in front
-		trees.z_index = 10  # Higher than player
-	else:
-		# Player is in front of tree - tree should be behind
-		trees.z_index = 5   # Lower than player
 
 func generate_signed_16_digit_seed() -> int:
 	var s = ""

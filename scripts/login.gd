@@ -34,10 +34,9 @@ func _on_login_pressed():
 	var headers = ["Content-Type: application/json"]
 	var json_body = JSON.stringify(payload)
 
-	status_label.text = "[color=yellow]Logging in...[/color]"
-
+	print("Logging in...")
 	login_request.request(
-		"http://127.0.0.1:8000/api/login/",
+		"http://127.0.0.1:8000/api/auth/login/",
 		headers,
 		HTTPClient.METHOD_POST,
 		json_body
@@ -53,8 +52,12 @@ func _on_login_response(result, response_code, headers, body):
 
 	if response_code == 200:
 		print("Login success:", json)
+		var token = json["token"]["access"]
+		var user = json["user"]
+		print("Access Token:", token)
+		print("User Info:", user)
 		main_camera.make_current()
-		
 	else:
-		status_label.text = "[color=red]Login failed: %s[/color]" % response_code
+		#var error_message = json.has("message") ? json["message"] : "Unknown error"
+		status_label.text = "[color=red]Login failed: %s[/color]"
 		print("Login failed:", response_code, json)
